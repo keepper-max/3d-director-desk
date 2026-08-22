@@ -316,7 +316,6 @@
 
 .director-home-guide,
 .director-home-release,
-.director-home-contributors,
 .director-home-controls {
   max-width: 1120px;
   margin: 38px auto 0;
@@ -324,43 +323,6 @@
   border-radius: 22px;
   padding: 24px;
   background: rgb(var(--panel-rgb) / 0.72);
-}
-
-.director-home-contributor-list {
-  display: grid;
-  margin: 20px 0 0;
-}
-
-.director-home-contributor-list > div {
-  display: grid;
-  grid-template-columns: minmax(140px, 0.32fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 18px;
-  border-top: 1px solid rgb(var(--border-rgb) / 0.3);
-  padding: 14px 2px 0;
-}
-
-.director-home-contributor-list dt {
-  color: rgb(var(--text-rgb));
-  font-size: 13px;
-  font-weight: 750;
-}
-
-.director-home-contributor-list dd {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 0;
-  color: rgb(var(--text-muted-rgb));
-  font-size: 11px;
-  line-height: 1.6;
-}
-
-.director-home-contributor-list dd strong {
-  flex: 0 0 auto;
-  color: rgb(var(--accent-rgb));
-  font-size: 11px;
 }
 
 .director-home-control-grid {
@@ -625,7 +587,6 @@
 
   .director-home-guide,
   .director-home-release,
-  .director-home-contributors,
   .director-home-controls {
     padding: 18px;
   }
@@ -641,17 +602,6 @@
   .director-home-mac-gestures dl,
   .director-home-tools-guide dl {
     grid-template-columns: 1fr;
-  }
-
-  .director-home-contributor-list > div {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-
-  .director-home-contributor-list dd {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 4px;
   }
 
   .director-home-steps li {
