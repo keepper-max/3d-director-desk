@@ -25,6 +25,11 @@
 | `instanceId` | 当前导演台实例 ID。导演台会按这个 ID 做 localStorage 场景隔离。 |
 | `theme` | `dark` 或 `light`。 |
 | `hostOrigin` | 父页面 origin。跨端口/跨域 iframe 通信时必填。 |
+| `mode` | 可选初始界面：`simple` 或 `professional`。无效值回退到简易模式；不传时恢复上次选择。 |
+
+两种模式共用同一个工程数据、时间轴和渲染内核。模式切换只控制界面能力分层，不改变工程 schema，也不会删除当前模式未显示的高级字段。
+
+守守画布生产环境默认同源挂载于 `/3d-director/`；即使同源，宿主仍必须校验 `event.origin`、`event.source`、`requestId` 和响应 action。
 
 同一个 `instanceId` 会恢复同一个导演台工程；不同 `instanceId` 会隔离保存。独立打开时，顶部也可以在“导演台 1 号 / 导演台 2 号”等本地实例之间切换。
 

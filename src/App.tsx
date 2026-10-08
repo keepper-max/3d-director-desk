@@ -1,7 +1,8 @@
 import "./styles/index.css";
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowRight, BookOpen, Boxes, Check, Clock3, Hand, House, Keyboard, MousePointer2, Plus, Route, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowRight, BookOpen, Boxes, Check, Clock3, Hand, House, Keyboard, MousePointer2, Plus, Route, Save, Sparkles, Trash2, X } from "lucide-react";
 import { DirectorDeskShell } from "./app/layout/DirectorDeskShell";
+import { useDirectorMode } from "./app/directorMode";
 import { DirectorCanvas } from "./editor/canvas/DirectorCanvas";
 import { ViewportSensitivitySettings } from "./editor/canvas/ViewportSensitivitySettings";
 import {
@@ -180,11 +181,13 @@ function isEditableShortcutTarget(target: EventTarget | null) {
 }
 
 export default function App() {
+  const { mode: directorUiMode, setMode: setDirectorUiMode } = useDirectorMode();
   const benchmarkMode = getPerformanceBenchmarkMode(window.location.search);
   const viewMode = useDirectorStore((state) => state.viewMode);
   const setViewMode = useDirectorStore((state) => state.setViewMode);
   const motionStudioOpen = useDirectorStore((state) => state.motionStudioOpen);
   const setMotionStudioOpen = useDirectorStore((state) => state.setMotionStudioOpen);
+  const saveLatestSnapshot = useDirectorStore((state) => state.saveLatestSnapshot);
   const [directorDeskView, setDirectorDeskView] = useState(createInitialDirectorDeskViewState);
   const { records: directorDesks, activeDeskId, screen } = directorDeskView;
 
@@ -459,7 +462,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-director-mode={directorUiMode}>
       <header className="top-bar">
         <div className="top-bar-left">
           <button className="top-bar-title top-bar-home-button" type="button" onClick={backToHome}>
@@ -487,9 +490,31 @@ export default function App() {
               <Plus aria-hidden="true" size={14} strokeWidth={1.9} />
               新建
             </button>
+            <button className="director-desk-create-button" type="button" onClick={saveLatestSnapshot}>
+              <Save aria-hidden="true" size={14} strokeWidth={1.9} />
+              保存
+            </button>
           </div>
         </div>
         <div className="top-bar-center">
+          <div className="director-ui-mode-toggle ui-segmented" role="group" aria-label="导演台模式">
+            <button
+              className={`ui-segmented-item ${directorUiMode === "simple" ? "ui-segmented-item-active" : ""}`}
+              aria-pressed={directorUiMode === "simple"}
+              type="button"
+              onClick={() => setDirectorUiMode("simple")}
+            >
+              简易模式
+            </button>
+            <button
+              className={`ui-segmented-item ${directorUiMode === "professional" ? "ui-segmented-item-active" : ""}`}
+              aria-pressed={directorUiMode === "professional"}
+              type="button"
+              onClick={() => setDirectorUiMode("professional")}
+            >
+              专业模式
+            </button>
+          </div>
           <div className="mode-toggle ui-segmented" role="group" aria-label="视角切换">
             <button
               className={`mode-toggle-button ui-segmented-item ${viewMode === "director" ? "ui-segmented-item-active" : ""}`}
@@ -524,7 +549,7 @@ export default function App() {
             运镜
           </button>
           <ViewportSensitivitySettings />
-          <PerformanceSettings />
+          {directorUiMode === "professional" ? <PerformanceSettings /> : null}
         </div>
         <div className="top-bar-actions">
           <button

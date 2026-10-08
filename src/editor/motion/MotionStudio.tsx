@@ -50,6 +50,7 @@ import {
   type DirectorCameraTargetFollowMode,
 } from "../schema/semanticBody";
 import { RouteCustomEasingControl } from "./RouteCustomEasingControl";
+import { useDirectorMode } from "../../app/directorMode";
 
 export function getActiveCameraWaypointIndex(progress: number, times: number[]) {
   if (times.length === 0) return -1;
@@ -70,6 +71,7 @@ export function MotionStudio({
   onLoadCameraSnapshot?: (snapshot: CameraShotSnapshot) => void;
   onStartPilot?: (editKeyframeId?: string | null) => void;
 }) {
+  const { mode: directorUiMode } = useDirectorMode();
   const open = useDirectorStore((state) => state.motionStudioOpen);
   const viewMode = useDirectorStore((state) => state.viewMode);
   const cameraPilotMode = useDirectorStore((state) => state.cameraPilotMode);
@@ -116,6 +118,10 @@ export function MotionStudio({
     targetObjectId: string;
     templateId: CameraPathTemplateId;
   } | null>(null);
+
+  useEffect(() => {
+    if (directorUiMode === "simple" && templateGroup !== "official") setTemplateGroup("official");
+  }, [directorUiMode, templateGroup]);
 
   useEffect(() => {
     if (!open) return;
@@ -172,6 +178,7 @@ export function MotionStudio({
   const activeTemplate = CAMERA_PATH_TEMPLATES.find((template) => template.id === activeTemplateId) ?? null;
 
   function addCurrentView() {
+    if (directorUiMode === "simple" && motionPath.keyframes.length >= 2) return;
     recordCameraMotionSnapshot(activeCamera.id, getViewportCameraSnapshot());
   }
 
@@ -485,13 +492,13 @@ export function MotionStudio({
               onClick={() => setTemplateGroup("official")}
               aria-label="基础预设"
             >基础预设 <small>{getCameraPathTemplatesByGroup("official").length}</small></button>
-            <button
+            {directorUiMode === "professional" ? <button
               type="button"
               aria-pressed={templateGroup === "community"}
               className={templateGroup === "community" ? "is-active" : undefined}
               onClick={() => setTemplateGroup("community")}
               aria-label="群友预设"
-            ><Users aria-hidden="true" size={12} />群友预设 <small>{getCameraPathTemplatesByGroup("community").length}</small></button>
+            ><Users aria-hidden="true" size={12} />群友预设 <small>{getCameraPathTemplatesByGroup("community").length}</small></button> : null}
           </div>
           <div className="motion-template-controls">
             <label>
@@ -572,7 +579,7 @@ export function MotionStudio({
             <MousePointer2 aria-hidden="true" size={17} />
             <span><strong>开始掌镜</strong><small>WASD 自由走镜头</small></span>
           </button>
-          <button type="button" className="motion-add-current" aria-label="添加当前视角为轨迹点" onClick={addCurrentView}>
+          <button type="button" className="motion-add-current" aria-label="添加当前视角为轨迹点" disabled={directorUiMode === "simple" && motionPath.keyframes.length >= 2} title={directorUiMode === "simple" && motionPath.keyframes.length >= 2 ? "简易模式只设置相机起点和终点" : undefined} onClick={addCurrentView}>
             <Plus aria-hidden="true" size={16} />
             添加当前视角
           </button>
@@ -670,7 +677,7 @@ export function MotionStudio({
                   </div>
                 );
               })}
-              <button type="button" className="motion-waypoint-add" aria-label="添加当前视角为轨迹点" onClick={addCurrentView}>
+              <button type="button" className="motion-waypoint-add" aria-label="添加当前视角为轨迹点" disabled={directorUiMode === "simple" && motionPath.keyframes.length >= 2} title={directorUiMode === "simple" && motionPath.keyframes.length >= 2 ? "简易模式只设置相机起点和终点" : undefined} onClick={addCurrentView}>
                 <Plus aria-hidden="true" size={16} />
               </button>
             </div>
@@ -730,6 +737,22 @@ export function MotionStudio({
             </div>
           ) : null}
         </div>
+
+        {directorUiMode === "simple" ? (
+          <label className="motion-setting-row motion-simple-duration">
+            <span><Gauge aria-hidden="true" size={14} />运镜时长</span>
+            <input
+              aria-label="简单运镜时长"
+              type="range"
+              min="0.5"
+              max="30"
+              step="0.5"
+              value={motionPath.duration}
+              onChange={(event) => updateCameraMotionPath(activeCamera.id, { duration: Number(event.currentTarget.value) })}
+            />
+            <output>{motionPath.duration.toFixed(1)}s</output>
+          </label>
+        ) : null}
 
         <div className="motion-settings-column">
           <div className="motion-block-heading">

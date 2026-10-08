@@ -24,6 +24,7 @@ import {
   isNativeAnimationForCharacter,
   normalizeAnimationRigProfile,
 } from "./characterAnimationCompatibility";
+import { useDirectorMode } from "../../app/directorMode";
 
 export { areAnimationProfilesCompatible, isNativeAnimationForCharacter } from "./characterAnimationCompatibility";
 
@@ -32,6 +33,7 @@ function replaceAxis(tuple: [number, number, number], axis: 0 | 1 | 2, value: nu
 }
 
 export function CharacterPanel() {
+  const { mode: directorUiMode } = useDirectorMode();
   const animationInputRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<"properties" | "pose" | "action" | "route">("properties");
   const [animationImportStatus, setAnimationImportStatus] = useState<string | null>(null);
@@ -650,6 +652,8 @@ export function CharacterPanel() {
                 <button
                   className="character-route-add"
                   type="button"
+                  disabled={directorUiMode === "simple" && routePath.keyframes.length >= 2}
+                  title={directorUiMode === "simple" && routePath.keyframes.length >= 2 ? "简易模式只设置起点和终点" : undefined}
                   onClick={() => {
                     setCameraMotionPlaying(false);
                     const id = addCharacterRoutePoint(role.id);

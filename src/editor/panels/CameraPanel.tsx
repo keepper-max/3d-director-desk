@@ -15,6 +15,7 @@ import { getDirectorObjectFocusTarget, isCameraFocusableObject } from "../schema
 import type { DirectorCameraCapture } from "../schema/directorProject";
 import { getCameraMotionPath, getCameraMotionTimingPlan } from "../schema/cameraMotion";
 import { useDirectorStore } from "../store/directorStore";
+import { useDirectorMode } from "../../app/directorMode";
 
 const VIEWER_ZOOM_MIN = 0.25;
 const VIEWER_ZOOM_MAX = 5;
@@ -33,6 +34,7 @@ function replaceAxis(tuple: [number, number, number], axis: 0 | 1 | 2, value: nu
 }
 
 export function CameraPanel() {
+  const { mode: directorUiMode } = useDirectorMode();
   const [activeTab, setActiveTab] = useState<"properties" | "motion" | "captures">("properties");
   const [captureError, setCaptureError] = useState<string | null>(null);
   const [hoveredCaptureId, setHoveredCaptureId] = useState<string | null>(null);
@@ -48,6 +50,12 @@ export function CameraPanel() {
     originX: number;
     originY: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (directorUiMode === "simple" && activeTab !== "properties") {
+      setActiveTab("properties");
+    }
+  }, [activeTab, directorUiMode]);
   const camera = useDirectorStore((state) =>
     state.project.cameras.find((item) => item.id === state.project.activeCameraId)
   );
@@ -90,6 +98,24 @@ export function CameraPanel() {
   const motionTimingPlan = useMemo(() => getCameraMotionTimingPlan(currentCamera), [currentCamera]);
   const selectedMotionKeyframe =
     motionPath.keyframes.find((item) => item.id === selectedCameraKeyframeId) ?? motionPath.keyframes[0] ?? null;
+
+  function applySimpleCameraPreset(preset: "front" | "back" | "left" | "right" | "angle" | "high" | "low" | "close" | "medium" | "wide") {
+    const target = currentCamera.target;
+    const current = currentCamera.transform.position;
+    const currentDistance = Math.max(3, Math.hypot(current[0] - target[0], current[1] - target[1], current[2] - target[2]));
+    const shotDistance = preset === "close" ? 2.5 : preset === "medium" ? 5 : preset === "wide" ? 9 : currentDistance;
+    let position: [number, number, number] = [target[0], target[1] + 1.2, target[2] + shotDistance];
+    if (preset === "back") position = [target[0], target[1] + 1.2, target[2] - shotDistance];
+    if (preset === "left") position = [target[0] - shotDistance, target[1] + 1.2, target[2]];
+    if (preset === "right") position = [target[0] + shotDistance, target[1] + 1.2, target[2]];
+    if (preset === "angle") position = [target[0] + shotDistance * 0.707, target[1] + 1.2, target[2] + shotDistance * 0.707];
+    if (preset === "high") position = [target[0], target[1] + shotDistance, target[2] + shotDistance * 0.3];
+    if (preset === "low") position = [target[0], target[1] - 0.5, target[2] + shotDistance];
+    updateCamera(currentCamera.id, {
+      transform: { ...currentCamera.transform, position },
+      ...(preset === "close" ? { fov: 50 } : preset === "medium" ? { fov: 45 } : preset === "wide" ? { fov: 40 } : {}),
+    });
+  }
 
   useEffect(() => {
     setMotionDurationDraft(String(motionPath.duration));
@@ -709,15 +735,29 @@ export function CameraPanel() {
       title="摄像机"
       ariaLabel="摄像机右侧属性面板"
       className={activeTab === "captures" ? "camera-inspector-captures" : undefined}
-      footer={renderCaptureOverviewFooter()}
+      footer={directorUiMode === "professional" ? renderCaptureOverviewFooter() : undefined}
       tabs={[
         { label: "属性", active: activeTab === "properties", onClick: () => setActiveTab("properties") },
-        { label: "轨迹", active: activeTab === "motion", onClick: handleOpenMotionTab },
-        { label: "摄像机截图", active: activeTab === "captures", onClick: () => setActiveTab("captures") },
+        ...(directorUiMode === "professional" ? [
+          { label: "轨迹", active: activeTab === "motion", onClick: handleOpenMotionTab },
+          { label: "摄像机截图", active: activeTab === "captures", onClick: () => setActiveTab("captures") },
+        ] : []),
       ]}
     >
       {activeTab === "properties" ? (
         <>
+          {directorUiMode === "simple" ? (
+            <InspectorSection title="常用镜头预设" className="camera-simple-presets">
+              <div className="preset-grid">
+                {([
+                  ["front", "正面"], ["back", "背面"], ["left", "左侧"], ["right", "右侧"], ["angle", "45度"],
+                  ["high", "俯拍"], ["low", "仰拍"], ["close", "近景"], ["medium", "中景"], ["wide", "全景"],
+                ] as const).map(([preset, label]) => (
+                  <button key={preset} type="button" onClick={() => applySimpleCameraPreset(preset)}>{label}</button>
+                ))}
+              </div>
+            </InspectorSection>
+          ) : null}
           <InspectorTextField
             label="名称"
             ariaLabel="机位名称"

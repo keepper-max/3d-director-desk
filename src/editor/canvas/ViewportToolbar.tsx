@@ -29,6 +29,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { requestViewportCapture } from "../io/captureBridge";
+import { useDirectorMode } from "../../app/directorMode";
 import { readLocalModelFile } from "../loaders/localModelImport";
 import {
   inspectCharacterModelFile,
@@ -120,6 +121,7 @@ export function ViewportToolbar({
   getViewportCameraSnapshot?: () => CameraShotSnapshot;
   toolbarContainerRef?: MutableRefObject<HTMLDivElement | null>;
 }) {
+  const { mode: directorUiMode } = useDirectorMode();
   const toolbarRef = useRef<HTMLDivElement | null>(null);
   const aspectRatioPanelRef = useRef<HTMLDivElement | null>(null);
   const characterTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -695,7 +697,7 @@ export function ViewportToolbar({
     setAspectRatioPanelOpen(false);
   }
 
-  const actions: ToolbarAction[] = [
+  const allActions: ToolbarAction[] = [
     { label: "移动", icon: Move3D, mode: "translate", onClick: () => selectTransformMode("translate") },
     { label: "旋转", icon: Rotate3D, mode: "rotate", onClick: () => selectTransformMode("rotate") },
     { label: "缩放", icon: Scale3D, mode: "scale", onClick: () => selectTransformMode("scale") },
@@ -725,6 +727,11 @@ export function ViewportToolbar({
     { label: "十二方位截图", icon: Grid3X3, onClick: () => void handleCapture("twelve") },
     { label: "全屏", icon: Expand, onClick: toggleViewportPanelsCollapsed },
   ];
+  const actions = allActions.filter((action) => directorUiMode === "professional" || ![
+    "导入本地模型",
+    "四方位截图",
+    "十二方位截图",
+  ].includes(action.label));
 
   function renderActionButton(action: ToolbarAction) {
     const Icon = action.icon;
@@ -822,7 +829,7 @@ export function ViewportToolbar({
               {option.label}
             </button>
           ))}
-          <button
+          {directorUiMode === "professional" ? <button
             className="viewport-toolbar-menu-item-inline"
             role="menuitem"
             type="button"
@@ -830,8 +837,8 @@ export function ViewportToolbar({
           >
             <UserPlus aria-hidden="true" size={14} strokeWidth={1.8} />
             <span>{characterImportBusy ? "正在体检..." : "导入绑骨人物"}</span>
-          </button>
-          <div
+          </button> : null}
+          {directorUiMode === "professional" ? <div
             className="viewport-toolbar-submenu-wrap"
             onMouseEnter={openCrowdPanel}
           >
@@ -848,8 +855,8 @@ export function ViewportToolbar({
               <span>群众 (3x3)</span>
               <ChevronRight aria-hidden="true" size={14} strokeWidth={1.8} />
             </button>
-          </div>
-          <div
+          </div> : null}
+          {directorUiMode === "professional" ? <div
             className="viewport-toolbar-submenu-wrap"
             onMouseEnter={() => {
               setGeometryMenuOpen(true);
@@ -871,7 +878,7 @@ export function ViewportToolbar({
               <span>几何模型</span>
               <ChevronRight aria-hidden="true" size={14} strokeWidth={1.8} />
             </button>
-          </div>
+          </div> : null}
         </div>
       ) : null}
       {crowdPanelOpen ? (
@@ -986,7 +993,7 @@ export function ViewportToolbar({
             </button>
           </div>
           <div className="model-library-tabs" role="tablist" aria-label="模型分类">
-            {MODEL_LIBRARY_CATEGORIES.map((category) => {
+            {MODEL_LIBRARY_CATEGORIES.filter((category) => directorUiMode === "professional" || category.id !== "my-models").map((category) => {
               const active = category.id === activeModelLibraryCategoryId;
 
               return (

@@ -2,8 +2,10 @@ import type { ReactNode } from "react";
 import { ObjectTreePanel } from "../../editor/panels/ObjectTreePanel";
 import { RightPanel } from "../../editor/panels/RightPanel";
 import { useDirectorStore } from "../../editor/store/directorStore";
+import { useDirectorMode } from "../directorMode";
 
 export function DirectorDeskShell({ children }: { children: ReactNode }) {
+  const { mode } = useDirectorMode();
   const viewportPanelsCollapsed = useDirectorStore((state) => state.viewportPanelsCollapsed);
   const motionStudioOpen = useDirectorStore((state) => state.motionStudioOpen);
   const cameraPilotMode = useDirectorStore((state) => state.cameraPilotMode);
@@ -25,6 +27,7 @@ export function DirectorDeskShell({ children }: { children: ReactNode }) {
         motionStudioOpen && !isCameraPiloting && !isCameraPreviewing ? "is-motion-studio-open" : "",
         isCameraPiloting ? "is-camera-piloting" : "",
         isCameraPreviewing ? "is-camera-previewing" : "",
+        mode === "simple" ? "is-simple-mode" : "is-professional-mode",
       ].filter(Boolean).join(" ")}
     >
       <section className="viewport-column" aria-label="3D视口">
