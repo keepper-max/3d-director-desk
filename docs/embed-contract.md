@@ -37,6 +37,8 @@
 
 ## 子应用发给宿主
 
+初始化约定：`storyai:director-desk-ready` 仅声明应用就绪，处理宿主 session 时不回发 ready。重复发送同一个 `instanceId` 的 session 只更新主题，不重新加载工程或清空运镜、播放与撤销状态；不同实例仍按原流程切换。宿主对同一页面初始化只回复一次 session 并查询能力。
+
 ### ready
 
 导演台初始化完成：

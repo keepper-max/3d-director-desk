@@ -169,6 +169,31 @@ it("switches director store persistence when the host sends a card session", () 
   expect(useDirectorStore.getState().project.scene.backgroundColor).toBe("#151515");
 });
 
+it("keeps motion editing and playback intact when the host repeats the current session", () => {
+  initDirectorDeskHostBridge();
+  const postMessage = vi.spyOn(window.parent, "postMessage").mockImplementation(() => undefined);
+  const sendSession = (theme: string) => window.dispatchEvent(new MessageEvent("message", {
+    data: { type: "storyai:director-desk-session", payload: { instanceId: "repeated-session", theme } },
+    origin: window.location.origin,
+  }));
+
+  sendSession("dark");
+  useDirectorStore.getState().updateScene({ backgroundColor: "#151515" });
+  useDirectorStore.getState().setMotionStudioOpen(true);
+  useDirectorStore.getState().setCameraMotionPlaying(true);
+  const before = useDirectorStore.getState();
+  sendSession("light");
+  const after = useDirectorStore.getState();
+
+  expect(after.project).toBe(before.project);
+  expect(after.undoStack).toBe(before.undoStack);
+  expect(after.motionStudioOpen).toBe(true);
+  expect(after.cameraMotionPlaying).toBe(true);
+  expect(document.documentElement.dataset.theme).toBe("light");
+  expect(postMessage).not.toHaveBeenCalled();
+  postMessage.mockRestore();
+});
+
 it("applies the light theme sent by the host session to the director desk document", () => {
   document.documentElement.classList.add("dark");
   document.documentElement.dataset.theme = "dark";

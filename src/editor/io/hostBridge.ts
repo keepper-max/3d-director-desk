@@ -40,6 +40,7 @@ export interface HostCaptureBatchPayload {
 }
 
 let initialized = false;
+let activeHostSessionId: string | null = null;
 let activeExtensionExportRequestId: string | null = null;
 let clearTauriTransport: (() => void) | null = null;
 export const DIRECTOR_DESK_SESSION_OPENED_EVENT = "storyai:director-desk-session-opened";
@@ -130,10 +131,10 @@ function openHostSession(payload: HostSessionPayload) {
   if (theme) {
     applyDirectorDeskTheme(theme);
   }
-  if (instanceId) {
+  if (instanceId && instanceId !== activeHostSessionId) {
     useDirectorStore.getState().openScopedScene(instanceId);
+    activeHostSessionId = instanceId;
     window.dispatchEvent(new CustomEvent(DIRECTOR_DESK_SESSION_OPENED_EVENT, { detail: { instanceId } }));
-    postDirectorDeskMessageToHost({ type: "storyai:director-desk-ready" });
   }
 }
 
@@ -332,6 +333,7 @@ export function clearDirectorDeskHostBridge() {
   }
 
   initialized = false;
+  activeHostSessionId = null;
   activeExtensionExportRequestId = null;
   window.removeEventListener("message", handleHostMessage);
   clearTauriTransport?.();
