@@ -1426,6 +1426,13 @@
   padding: 0 3px;
 }
 
+.app-shell .object-tree-delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 .app-shell .object-tree-heading-icon {
   display: grid;
   place-items: center;

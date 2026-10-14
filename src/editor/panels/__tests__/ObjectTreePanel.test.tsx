@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach } from "vitest";
 import { createInitialDirectorState, useDirectorStore } from "../../store/directorStore";
@@ -370,20 +370,51 @@ it("deletes all selected rows when users press the keyboard delete key", async (
   expect(useDirectorStore.getState().selectedObjectIds).toEqual([]);
 });
 
-it("does not render a delete icon and deletes the selected object with the keyboard delete key", async () => {
+it("keeps keyboard deletion available alongside the delete button", async () => {
   const user = userEvent.setup();
   useDirectorStore.getState().addPresetCharacter("female");
   render(<ObjectTreePanel />);
 
   await user.click(screen.getByRole("button", { name: "角色02" }));
 
-  expect(screen.queryByRole("button", { name: "删除选中内容" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "删除选中对象" })).toBeEnabled();
 
   await user.keyboard("{Delete}");
 
   expect(screen.queryByRole("button", { name: "角色02" })).not.toBeInTheDocument();
   expect(useDirectorStore.getState().selectedObjectId).toBeNull();
   expect(useDirectorStore.getState().project.objects.some((item) => item.name === "角色02")).toBe(false);
+});
+
+it("disables deletion without a selection and lets users undo button deletion", async () => {
+  const user = userEvent.setup();
+  useDirectorStore.getState().addPresetCharacter("female");
+  useDirectorStore.getState().selectObject(null);
+  render(<ObjectTreePanel />);
+
+  const remove = screen.getByRole("button", { name: "删除选中对象" });
+  expect(remove).toBeDisabled();
+  await user.click(screen.getByRole("button", { name: "角色02" }));
+  expect(remove).toBeEnabled();
+  await user.click(remove);
+  expect(screen.queryByRole("button", { name: "角色02" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "角色01" })).toBeInTheDocument();
+  expect(remove).toBeDisabled();
+  act(() => useDirectorStore.getState().undo());
+  expect(screen.getByRole("button", { name: "角色02" })).toBeInTheDocument();
+});
+
+it("deletes all selected objects through the button", async () => {
+  const user = userEvent.setup();
+  useDirectorStore.getState().addPresetCharacter("female");
+  render(<ObjectTreePanel />);
+  await user.click(screen.getByRole("button", { name: "角色01" }));
+  await user.keyboard("{Shift>}");
+  await user.click(screen.getByRole("button", { name: "角色02" }));
+  await user.keyboard("{/Shift}");
+  await user.click(screen.getByRole("button", { name: "删除选中对象" }));
+  expect(screen.queryByRole("button", { name: "角色01" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "角色02" })).not.toBeInTheDocument();
 });
 
 it("switches the active camera when users select a camera row", async () => {

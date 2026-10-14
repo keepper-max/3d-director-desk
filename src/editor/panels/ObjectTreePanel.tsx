@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type MouseEvent } from "react";
-import { Box, Camera, ChevronDown, ChevronRight, Eye, EyeOff, Layers3, Lock, Search, Unlock, User, Users } from "lucide-react";
+import { Box, Camera, ChevronDown, ChevronRight, Eye, EyeOff, Layers3, Lock, Search, Trash2, Unlock, User, Users } from "lucide-react";
 import type { DirectorObject, DirectorObjectKind } from "../schema/directorProject";
 import { useDirectorStore } from "../store/directorStore";
 
@@ -295,6 +295,16 @@ export function ObjectTreePanel() {
           <small>{objects.length} 个对象</small>
         </div>
       </div>
+      <button
+        className="object-tree-delete-button"
+        type="button"
+        disabled={!selectedObjectId && selectedObjectIds.length === 0}
+        title="删除选中对象（Delete / Backspace），可撤销恢复"
+        onClick={deleteSelectedObject}
+      >
+        <Trash2 aria-hidden="true" size={15} strokeWidth={1.8} />
+        删除选中对象
+      </button>
       <label className="object-search-field">
         <Search aria-hidden="true" size={16} strokeWidth={1.8} />
         <input
